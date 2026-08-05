@@ -1,116 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Course Materials Vault</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; background: #f6f8fa; color: #24292f; }
-        h1 { border-bottom: 2px solid #d0d7de; padding-bottom: 10px; color: #0969da; }
-        .subject-block { background: white; border: 1px solid #d0d7de; border-radius: 6px; padding: 16px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .subject-title { font-size: 1.3rem; margin-top: 0; text-transform: capitalize; border-bottom: 1px dashed #d0d7de; padding-bottom: 6px; }
-        .subject-title a { color: #1f2328; text-decoration: none; }
-        .subject-title a:hover { color: #0969da; text-decoration: underline; }
-        ul { list-style: none; padding: 0; margin: 0; }
-        li { padding: 6px 0; display: flex; align-items: center; }
-        li::before { content: "📄"; margin-right: 8px; font-size: 0.9rem; }
-        a { color: #0969da; text-decoration: none; font-weight: 500; text-transform: capitalize; }
-        a:hover { text-decoration: underline; }
-        .status-msg { font-style: italic; color: #57606a; padding: 20px 0; }
-    </style>
-</head>
-<body>
-
-    <h1>📚 Course Materials Vault</h1>
-    <div id="vault-container" class="status-msg">Loading folders...</div>
-
-    <script>
-        // ====================================================
-        // STEP 1: MANUALLY TYPE YOUR LOWERCASE FOLDER NAMES HERE
-        // ====================================================
-        const SUBJECT_FOLDERS = ['gcc', 'git', 'github']; 
-
-        // Pre-configured with your exact repository properties
-        const GITHUB_USER = 'markdeegan'; 
-        const GITHUB_REPO = 'techskills';       
-        const container = document.getElementById('vault-container');
-
-        async function buildDashboard() {
-            
-            const response = await fetch('/api/data'); // Replace with your actual URL
-            // Check if the response is successful and is JSON
-            const contentType = response.headers.get("content-type");
-            if (response.ok && contentType && contentType.includes("application/json")) {
-                const data = await response.json();
-                // Proceed with building the dashboard
-            } else {
-                const errorText = await response.text();
-                console.error("Expected JSON but received:", errorText);
-                // Handle the error (e.g., show a notification)
-                  }
-            
-            try {
-                container.innerHTML = ''; // Clear loading message
-
-                // Sort the manually defined folders alphabetically
-                const sortedFolders = SUBJECT_FOLDERS.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
-
-                for (const folderName of sortedFolders) {
-                    const subjectDiv = document.createElement('div');
-                    subjectDiv.className = 'subject-block';
-                    
-                    const cleanFolderName = folderName.replace(/-/g, ' ');
-                    
-                    // Fetch the file names inside this specific subfolder
-                    const url = `https://markdeegan.github.io/techskills/${folderName}`;
-                    const response = await fetch(url);
-                    
-                    if (response.ok) {
-                        const files = await response.json();
-                        
-                        // Check if this subfolder contains its own index.html
-                        const hasIndexHtml = files.some(file => file.name.toLowerCase() === 'index.html');
-                        
-                        // If it has index.html, link the header directly to it.
-                        if (hasIndexHtml) {
-                            subjectDiv.innerHTML = `<h2 class="subject-title">📁 <a href="./${folderName}/index.html">${cleanFolderName}</a></h2><ul id="list-${folderName}"></ul>`;
-                        } else {
-                            subjectDiv.innerHTML = `<h2 class="subject-title">📁 ${cleanFolderName}</h2><ul id="list-${folderName}"></ul>`;
-                        }
-                        
-                        container.appendChild(subjectDiv);
-                        const listElement = document.getElementById(`list-${folderName}`);
-
-                        // Filter out index.html, keep other HTML files, and sort them alphabetically
-                        const htmlFiles = files
-                            .filter(file => file.name.endsWith('.html') && file.name.toLowerCase() !== 'index.html')
-                            .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
-
-                        if (htmlFiles.length === 0 && !hasIndexHtml) {
-                            listElement.innerHTML = '<li style="color:#57606a; font-style:italic;">No HTML topics found here.</li>';
-                        } else {
-                            htmlFiles.forEach(file => {
-                                const topicName = file.name.replace('.html', '').replace(/-/g, ' ');
-                                const relativePath = `./${folderName}/${file.name}`;
-                                
-                                const li = document.createElement('li');
-                                li.innerHTML = `<a href="${relativePath}">${topicName}</a>`;
-                                listElement.appendChild(li);
-                            });
-                        }
-                    } else {
-                        // Display error block if the folder spelling doesn't match
-                        subjectDiv.innerHTML = `<h2 class="subject-title">📁 ${cleanFolderName}</h2><ul><li style="color:#cf222e; font-style:italic;">Could not read folder. Make sure the folder exists exactly as written.</li></ul>`;
-                        container.appendChild(subjectDiv);
-                    }
-                }
-            } catch (error) {
-                console.error(error);
-                container.innerHTML = `<p style="color: #cf222e; font-weight: bold;">⚠️ Error mapping folders: ${error.message}</p>`;
-            }
-        }
-
-        buildDashboard();
-    </script>
-</body>
+  <head>
+    <meta charset="utf-8">
+    <title>Mark Deegan - technical skills for Computer Engineers</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js"></script>
+  </head>
+  <body>
+    Basic content goes here<!-- page content -->
+  </body>
 </html>
