@@ -28,8 +28,8 @@ let htmlContent = `<!DOCTYPE html>
     <div id="vault-container">
 `;
 
-// Read everything in the root directory
-const items = fs.readdirSync(rootDir);
+// 1. Read and sort the items in the root folder alphabetically
+const items = fs.readdirSync(rootDir).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
 items.forEach(item => {
     const itemPath = path.join(rootDir, item);
@@ -39,9 +39,13 @@ items.forEach(item => {
         const cleanFolderName = item.replace(/-/g, ' ');
         htmlContent += `        <div class="subject-block">\n            <h2 class="subject-title">📁 ${cleanFolderName}</h2>\n            <ul>\n`;
         
-        // Look inside the subject folder for your HTML topics
+        // 2. Read contents inside the subject folder
         const files = fs.readdirSync(itemPath);
-        const htmlFiles = files.filter(file => file.endsWith('.html'));
+        
+        // Filter for HTML topics and sort them alphabetically
+        const htmlFiles = files
+            .filter(file => file.endsWith('.html'))
+            .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
         if (htmlFiles.length === 0) {
             htmlContent += `                <li style="color:#57606a; font-style:italic;">No topics found here.</li>\n`;
@@ -61,4 +65,4 @@ htmlContent += `    </div>\n</body>\n</html>`;
 
 // Save the statically generated code straight to index.html
 fs.writeFileSync(path.join(rootDir, 'index.html'), htmlContent);
-console.log('Successfully compiled index.html!');
+console.log('Successfully compiled index.html with alphabetical sorting!');
