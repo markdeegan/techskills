@@ -39,7 +39,7 @@
         async function buildDashboard() {
             try {
                 // 2. Fetch root structure from GitHub's live API
-                const rootUrl = `https://github.com.${GITHUB_USER}/${GITHUB_REPO}/docs`;
+                const rootUrl = `https://github.com/markdeegan/techskills/docs`;
                 const rootResponse = await fetch(rootUrl);
                 
                 if (!rootResponse.ok) throw new Error('Could not find repository. Check your Username and Repo spelling.');
