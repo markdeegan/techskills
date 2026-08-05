@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Materials Vault</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; background: #f6f8fa; color: #24292f; }
+        h1 { border-bottom: 2px solid #d0d7de; padding-bottom: 10px; color: #0969da; }
+        .subject-block { background: white; border: 1px solid #d0d7de; border-radius: 6px; padding: 16px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .subject-title { font-size: 1.3rem; margin-top: 0; text-transform: capitalize; border-bottom: 1px dashed #d0d7de; padding-bottom: 6px; }
+        .subject-title a { color: #1f2328; text-decoration: none; }
+        .subject-title a:hover { color: #0969da; text-decoration: underline; }
+        ul { list-style: none; padding: 0; margin: 0; }
+        li { padding: 6px 0; display: flex; align-items: center; }
+        li::before { content: "📄"; margin-right: 8px; font-size: 0.9rem; }
+        a { color: #0969da; text-decoration: none; font-weight: 500; text-transform: capitalize; }
+        a:hover { text-decoration: underline; }
+        .status-msg { font-style: italic; color: #57606a; padding: 20px 0; }
+    </style>
+</head>
+<body>
+
+    <h1>📚 Course Materials Vault</h1>
+    <div id="vault-container" class="status-msg">Examining folders and structure...</div>
+
+    <script>
+        // ==========================================
+        // 1. CONFIGURATION (CHANGE THESE TWO LINES ONLY)
+        // ==========================================
+        const GITHUB_USER = 'markdeegan'; // e.g., 'marysmith'
+        const GITHUB_REPO = 'techskills';       // e.g., 'techskills'
+        
+        // Items the script will ignore so they don't show up on your dashboard
+        const IGNORED_NAMES = ['assets', 'css', 'js', 'index.html', 'README.md', '.github', '.git', 'node_modules'];
+
+        const container = document.getElementById('vault-container');
+
+        async function buildDashboard() {
+            try {
+                // 2. Fetch root structure from GitHub's live API
+                const rootUrl = `https://github.com{GITHUB_USER}/${GITHUB_REPO}/contents`;
+                const rootResponse = await fetch(rootUrl);
+                
+                if (!rootResponse.ok) throw new Error('Could not find repository. Check your Username and Repo spelling.');
+                const rootItems = await rootResponse.json();
+
+                // Clear out the loading text
+                container.innerHTML = '';
+
+                // Filter items and sort subject folders alphabetically
+                const folders = rootItems
+                    .filter(item => item.type === 'dir' && !IGNORED_NAMES.includes(item.name))
+                    .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+
+                if (folders.length === 0) {
+                    container.innerHTML = '<p class="status-msg">No subject subfolders found.</p>';
+                    return;
+                }
+
+                // 3. Loop through each sorted subject folder
+                for (const folder of folders) {
+                    const subjectDiv = document.createElement('div');
+                    subjectDiv.className = 'subject-block';
+                    
+                    const cleanFolderName = folder.name.replace(/-/g, ' ');
+                    
+                    // Fetch files inside this specific subfolder
+                    const folderResponse = await fetch(folder.url);
+                    if (folderResponse.ok) {
+                        const files = await folderResponse.json();
+                        
+                        // Check if this subfolder contains its own index.html entry point
+                        const hasIndexHtml = files.some(file => file.name.toLowerCase() === 'index.html');
+                        
+                        // If it has index.html, link the header directly to it.
+                        if (hasIndexHtml) {
+                            subjectDiv.innerHTML = `<h2 class="subject-title">📁 <a href="./${folder.name}/index.html">${cleanFolderName}</a></h2><ul id="list-${folder.name}"></ul>`;
+                        } else {
+                            subjectDiv.innerHTML = `<h2 class="subject-title">📁 ${cleanFolderName}</h2><ul id="list-${folder.name}"></ul>`;
+                        }
+                        
+                        container.appendChild(subjectDiv);
+                        const listElement = document.getElementById(`list-${folder.name}`);
+
+                        // Filter out index.html from list items, keep other HTML files, and sort alphabetically
+                        const htmlFiles = files
+                            .filter(file => file.name.endsWith('.html') && file.name.toLowerCase() !== 'index.html')
+                            .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+
+                        if (htmlFiles.length === 0 && !hasIndexHtml) {
+                            listElement.innerHTML = '<li style="color:#57606a; font-style:italic;">No HTML topics found here.</li>';
+                        } else {
+                            htmlFiles.forEach(file => {
+                                const topicName = file.name.replace('.html', '').replace(/-/g, ' ');
+                                const relativePath = `./${folder.name}/${file.name}`;
+                                
+                                const li = document.createElement('li');
+                                li.innerHTML = `<a href="${relativePath}">${topicName}</a>`;
+                                listElement.appendChild(li);
+                            });
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error(error);
+                container.innerHTML = `<p style="color: #cf222e; font-weight: bold;">⚠️ Error: ${error.message}</p>`;
+            }
+        }
+
+        // Run the script instantly when the web page loads
+        buildDashboard();
+    </script>
+</body>
+</html>
