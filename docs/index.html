@@ -36,6 +36,19 @@
         const container = document.getElementById('vault-container');
 
         async function buildDashboard() {
+            
+            const response = await fetch('/api/data'); // Replace with your actual URL
+            // Check if the response is successful and is JSON
+            const contentType = response.headers.get("content-type");
+            if (response.ok && contentType && contentType.includes("application/json")) {
+                const data = await response.json();
+                // Proceed with building the dashboard
+            } else {
+                const errorText = await response.text();
+                console.error("Expected JSON but received:", errorText);
+                // Handle the error (e.g., show a notification)
+                  }
+            
             try {
                 container.innerHTML = ''; // Clear loading message
 
