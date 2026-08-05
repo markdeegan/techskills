@@ -22,68 +22,53 @@
 <body>
 
     <h1>📚 Course Materials Vault</h1>
-    <div id="vault-container" class="status-msg">Examining folders and structure...</div>
+    <div id="vault-container" class="status-msg">Loading folders...</div>
 
     <script>
-        // ==========================================
-        // 1. CONFIGURATION (CHANGE THESE TWO LINES ONLY)
-        // ==========================================
-        const GITHUB_USER = 'markdeegan'; // e.g., 'marysmith'
-        const GITHUB_REPO = 'techskills';       // e.g., 'techskills'
-        
-        // Items the script will ignore so they don't show up on your dashboard
-        const IGNORED_NAMES = ['assets', 'css', 'js', 'index.html', 'README.md', '.github', '.git', 'node_modules'];
+        // ====================================================
+        // STEP 1: MANUALLY TYPE YOUR LOWERCASE FOLDER NAMES HERE
+        // ====================================================
+        const SUBJECT_FOLDERS = ['networking', 'linux-basics', 'programming']; 
 
+        // Pre-configured with your exact repository properties
+        const GITHUB_USER = 'markdeegan'; 
+        const GITHUB_REPO = 'techskills';       
         const container = document.getElementById('vault-container');
 
         async function buildDashboard() {
             try {
-                // 2. Fetch root structure from GitHub's live API
-                const rootUrl = `https://github.com{GITHUB_USER}/${GITHUB_REPO}/contents`;
-                const rootResponse = await fetch(rootUrl);
-                
-                if (!rootResponse.ok) throw new Error('Could not find repository. Check your Username and Repo spelling.');
-                const rootItems = await rootResponse.json();
+                container.innerHTML = ''; // Clear loading message
 
-                // Clear out the loading text
-                container.innerHTML = '';
+                // Sort the manually defined folders alphabetically
+                const sortedFolders = SUBJECT_FOLDERS.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
-                // Filter items and sort subject folders alphabetically
-                const folders = rootItems
-                    .filter(item => item.type === 'dir' && !IGNORED_NAMES.includes(item.name))
-                    .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
-
-                if (folders.length === 0) {
-                    container.innerHTML = '<p class="status-msg">No subject subfolders found.</p>';
-                    return;
-                }
-
-                // 3. Loop through each sorted subject folder
-                for (const folder of folders) {
+                for (const folderName of sortedFolders) {
                     const subjectDiv = document.createElement('div');
                     subjectDiv.className = 'subject-block';
                     
-                    const cleanFolderName = folder.name.replace(/-/g, ' ');
+                    const cleanFolderName = folderName.replace(/-/g, ' ');
                     
-                    // Fetch files inside this specific subfolder
-                    const folderResponse = await fetch(folder.url);
-                    if (folderResponse.ok) {
-                        const files = await folderResponse.json();
+                    // Fetch the file names inside this specific subfolder
+                    const url = `https://github.com{GITHUB_USER}/${GITHUB_REPO}/contents/${folderName}`;
+                    const response = await fetch(url);
+                    
+                    if (response.ok) {
+                        const files = await response.json();
                         
-                        // Check if this subfolder contains its own index.html entry point
+                        // Check if this subfolder contains its own index.html
                         const hasIndexHtml = files.some(file => file.name.toLowerCase() === 'index.html');
                         
                         // If it has index.html, link the header directly to it.
                         if (hasIndexHtml) {
-                            subjectDiv.innerHTML = `<h2 class="subject-title">📁 <a href="./${folder.name}/index.html">${cleanFolderName}</a></h2><ul id="list-${folder.name}"></ul>`;
+                            subjectDiv.innerHTML = `<h2 class="subject-title">📁 <a href="./${folderName}/index.html">${cleanFolderName}</a></h2><ul id="list-${folderName}"></ul>`;
                         } else {
-                            subjectDiv.innerHTML = `<h2 class="subject-title">📁 ${cleanFolderName}</h2><ul id="list-${folder.name}"></ul>`;
+                            subjectDiv.innerHTML = `<h2 class="subject-title">📁 ${cleanFolderName}</h2><ul id="list-${folderName}"></ul>`;
                         }
                         
                         container.appendChild(subjectDiv);
-                        const listElement = document.getElementById(`list-${folder.name}`);
+                        const listElement = document.getElementById(`list-${folderName}`);
 
-                        // Filter out index.html from list items, keep other HTML files, and sort alphabetically
+                        // Filter out index.html, keep other HTML files, and sort them alphabetically
                         const htmlFiles = files
                             .filter(file => file.name.endsWith('.html') && file.name.toLowerCase() !== 'index.html')
                             .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
@@ -93,22 +78,25 @@
                         } else {
                             htmlFiles.forEach(file => {
                                 const topicName = file.name.replace('.html', '').replace(/-/g, ' ');
-                                const relativePath = `./${folder.name}/${file.name}`;
+                                const relativePath = `./${folderName}/${file.name}`;
                                 
                                 const li = document.createElement('li');
                                 li.innerHTML = `<a href="${relativePath}">${topicName}</a>`;
                                 listElement.appendChild(li);
                             });
                         }
+                    } else {
+                        // Display error block if the folder spelling doesn't match
+                        subjectDiv.innerHTML = `<h2 class="subject-title">📁 ${cleanFolderName}</h2><ul><li style="color:#cf222e; font-style:italic;">Could not read folder. Make sure the folder exists exactly as written.</li></ul>`;
+                        container.appendChild(subjectDiv);
                     }
                 }
             } catch (error) {
                 console.error(error);
-                container.innerHTML = `<p style="color: #cf222e; font-weight: bold;">⚠️ Error: ${error.message}</p>`;
+                container.innerHTML = `<p style="color: #cf222e; font-weight: bold;">⚠️ Error mapping folders: ${error.message}</p>`;
             }
         }
 
-        // Run the script instantly when the web page loads
         buildDashboard();
     </script>
 </body>
