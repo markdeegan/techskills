@@ -25,30 +25,28 @@
     <div id="vault-container" class="status-msg">Examining folders and structure...</div>
 
     <script>
-        // ==========================================
-        // 1. CONFIGURATION (CHANGE THESE TWO LINES ONLY)
-        // ==========================================
-        const GITHUB_USER = 'markdeegan'; // e.g., 'marysmith'
-        const GITHUB_REPO = 'techskills';       // e.g., 'techskills'
+        // Pre-configured with your exact details
+        const GITHUB_USER = 'markdeegan'; 
+        const GITHUB_REPO = 'techskills';       
         
-        // Items the script will ignore so they don't show up on your dashboard
+        // Files and folders that shouldn't show up on your dashboard list
         const IGNORED_NAMES = ['assets', 'css', 'js', 'index.html', 'README.md', '.github', '.git', 'node_modules'];
 
         const container = document.getElementById('vault-container');
 
         async function buildDashboard() {
             try {
-                // 2. Fetch root structure from GitHub's live API
-                const rootUrl = `https://github.com/markdeegan/techskills/docs`;
+                // Correct target API URL pattern that completely bypasses CORS restrictions
+                const rootUrl = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents`;
                 const rootResponse = await fetch(rootUrl);
                 
-                if (!rootResponse.ok) throw new Error('Could not find repository. Check your Username and Repo spelling.');
+                if (!rootResponse.ok) throw new Error('Could not read repository information via API.');
                 const rootItems = await rootResponse.json();
 
-                // Clear out the loading text
+                // Clear loading indicators
                 container.innerHTML = '';
 
-                // Filter items and sort subject folders alphabetically
+                // Filter out global files, focus on subject subfolders, and sort alphabetically
                 const folders = rootItems
                     .filter(item => item.type === 'dir' && !IGNORED_NAMES.includes(item.name))
                     .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
@@ -58,22 +56,21 @@
                     return;
                 }
 
-                // 3. Loop through each sorted subject folder
+                // Loop through your sorted folders
                 for (const folder of folders) {
                     const subjectDiv = document.createElement('div');
                     subjectDiv.className = 'subject-block';
                     
                     const cleanFolderName = folder.name.replace(/-/g, ' ');
                     
-                    // Fetch files inside this specific subfolder
+                    // Fetch items from the correct API sub-path url
                     const folderResponse = await fetch(folder.url);
                     if (folderResponse.ok) {
                         const files = await folderResponse.json();
                         
-                        // Check if this subfolder contains its own index.html entry point
+                        // Detect if the directory has a index.html landing page
                         const hasIndexHtml = files.some(file => file.name.toLowerCase() === 'index.html');
                         
-                        // If it has index.html, link the header directly to it.
                         if (hasIndexHtml) {
                             subjectDiv.innerHTML = `<h2 class="subject-title">📁 <a href="./${folder.name}/index.html">${cleanFolderName}</a></h2><ul id="list-${folder.name}"></ul>`;
                         } else {
@@ -83,7 +80,7 @@
                         container.appendChild(subjectDiv);
                         const listElement = document.getElementById(`list-${folder.name}`);
 
-                        // Filter out index.html from list items, keep other HTML files, and sort alphabetically
+                        // Filter out index.html from topics list, pick up raw html materials, and sort them alphabetically
                         const htmlFiles = files
                             .filter(file => file.name.endsWith('.html') && file.name.toLowerCase() !== 'index.html')
                             .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
@@ -104,11 +101,11 @@
                 }
             } catch (error) {
                 console.error(error);
-                container.innerHTML = `<p style="color: #cf222e; font-weight: bold;">⚠️ Error: ${error.message}</p>`;
+                container.innerHTML = `<p style="color: #cf222e; font-weight: bold;">⚠️ Error mapping folders: ${error.message}</p>`;
             }
         }
 
-        // Run the script instantly when the web page loads
+        // Run automatically when the webpage loads
         buildDashboard();
     </script>
 </body>
